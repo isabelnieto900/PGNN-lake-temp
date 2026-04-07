@@ -63,3 +63,14 @@ To run the **Hybrid-Residual (HPD-Res) model**, use the following:
 cd hybrid
 python res_nn.py --dataset mille_lacs --optimizer_val 2 --data_dir ../datasets/ --use_YPhy 1 --lambda 0.0
 ```
+
+### NN baseline used in this workspace
+
+For the NN baseline (no YPhy input, no physics loss) with the settings used in our runs:
+
+```
+cd hybrid
+python hpd.py --dataset mille_lacs --optimizer_val 1 --data_dir ../datasets/ --use_YPhy 0 --lambda 0.0 --n_layers 3 --n_nodes 12 --batch_size 1000 --epochs 10000 --val_frac 0.1 --patience_val 500 --tr_size 3000 --n_iters 1 --save_dir ../results/
+```
+
+Where `--optimizer_val 1` is AdaDelta.

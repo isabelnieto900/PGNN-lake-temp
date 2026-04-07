@@ -1,0 +1,20 @@
+.venv37/
+venv/
+papersensores.pdf
+
+# Generated results and logs
+results/*.mat
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# System
+.DS_Store
+.idea/
+.vscode/
+papers/pgnn_1710_11431.pdf
+papers/pgnn_1710_11431.txt

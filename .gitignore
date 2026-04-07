@@ -16,5 +16,4 @@ __pycache__/
 .DS_Store
 .idea/
 .vscode/
-papers/pgnn_1710_11431.pdf
-papers/pgnn_1710_11431.txt
+papers/

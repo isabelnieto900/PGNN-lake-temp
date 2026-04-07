@@ -22,7 +22,7 @@ ap.add_argument('--epochs', default=10000, type=int, help='Epochs')
 ap.add_argument('--drop_frac', default=0.0, type=float, help='Dropout Fraction')
 ap.add_argument('--use_YPhy', type=int, default=1, help='Use Physics Numeric Model as input')
 ap.add_argument('--n_nodes', default=12, type=int, help='Number of Nodes in Hidden Layer')
-ap.add_argument('--n_layers', default=2, type=int, help='Number of Hidden Layers')
+ap.add_argument('--n_layers', default=3, type=int, help='Number of Hidden Layers')
 ap.add_argument('--lamda', '--lambda', dest='lamda', default=0.0, type=float, help='lambda hyperparameter')
 ap.add_argument('--tr_size', default=3000, type=int, help='Size of Training set')
 ap.add_argument('--val_frac', default=0.1, type=float, help='Validation Fraction')
@@ -88,6 +88,7 @@ def PGNN_train_test(iteration=0):
     Xc = mat['Xc_doy']
     Y = mat['Y']
     YPhy = mat['Modeled_temp']
+    # Chronological split (index-based): train on early data, test on later data
     trainX, trainY = Xc[:args.tr_size,:],Y[:args.tr_size]
     testX, testY = Xc[args.tr_size:,:],Y[args.tr_size:]
     

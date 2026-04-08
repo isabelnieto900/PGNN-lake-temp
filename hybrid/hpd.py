@@ -167,18 +167,19 @@ def PGNN_train_test(iteration=0):
     exp_name = 'pgnn_'+args.dataset+optimizer_name + '_drop' + str(args.drop_frac) + '_usePhy' + str(args.use_YPhy) +  '_nL' + str(args.n_layers) + '_nN' + str(args.n_nodes) + '_trsize' + str(args.tr_size) + '_lamda' + str(args.lamda) + '_iter' + str(iteration)
     exp_name = exp_name.replace('.','pt')
     results_name = os.path.join(results_dir, exp_name + '_results.mat') # storing the results of the model
-    spio.savemat(results_name, 
-                 {'train_loss_1':history.history['loss_1'], 
-                  'val_loss_1':history.history['val_loss_1'], 
-                  'train_rmse':history.history['root_mean_squared_error'], 
-                  'val_rmse':history.history['val_root_mean_squared_error'], 
-                  'test_rmse':test_score[2],
-                  'phy_consistency': phy_cons,
-                  'physical_inconsistency': percent_phy_incon,
-                  'percentage_phy_incon': percent_phy_incon})
-                  'physical_inconsistency': percent_phy_incon,
-                  'percentage_phy_incon': percent_phy_incon,
-                  'phy_consistency': phy_cons})
+    spio.savemat(
+        results_name,
+        {
+            'train_loss_1': history.history['loss_1'],
+            'val_loss_1': history.history['val_loss_1'],
+            'train_rmse': history.history['root_mean_squared_error'],
+            'val_rmse': history.history['val_root_mean_squared_error'],
+            'test_rmse': test_score[2],
+            'phy_consistency': phy_cons,
+            'physical_inconsistency': percent_phy_incon,
+            'percentage_phy_incon': percent_phy_incon
+        }
+    )
     
     return train_rmse, test_rmse, phy_cons, percent_phy_incon
 

@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import scipy.io as spio
 import numpy as np
 from keras.models import Sequential
@@ -31,6 +32,15 @@ def combined_loss(params):
         return mean_squared_error(y_true, y_pred) + lam * K.mean(K.relu(udendiff))
     return loss
 
+def relu(m):
+    m[m < 0] = 0
+    return m
+
+def get_model_family(lamda):
+    if lamda == 0:
+        return 'PGNN0'
+    return 'PGNN'
+
 def PGNN_train_test(optimizer_name, optimizer_val, drop_frac, use_YPhy, iteration, n_layers, n_nodes, tr_size, lamda, lake_name):
         
     # Hyper-parameters of the training process
@@ -42,9 +52,11 @@ def PGNN_train_test(optimizer_name, optimizer_val, drop_frac, use_YPhy, iteratio
     # Initializing results filename
     exp_name = optimizer_name + '_drop' + str(drop_frac) + '_usePhy' + str(use_YPhy) +  '_nL' + str(n_layers) + '_nN' + str(n_nodes) + '_trsize' + str(tr_size) + '_lamda' + str(lamda) + '_iter' + str(iteration)
     exp_name = exp_name.replace('.','pt')
-    results_dir = '../results/'
-    model_name = results_dir + exp_name + '_model.h5' # storing the trained model
-    results_name = results_dir + exp_name + '_results.mat' # storing the results of the model
+    results_root = '../results/'
+    results_dir = os.path.join(results_root, get_model_family(lamda), lake_name)
+    os.makedirs(results_dir, exist_ok=True)
+    model_name = os.path.join(results_dir, exp_name + '_model.h5') # storing the trained model
+    results_name = os.path.join(results_dir, exp_name + '_results.mat') # storing the results of the model
     
     # Load features (Xc) and target values (Y)
     data_dir = '../datasets/'
@@ -105,9 +117,11 @@ def PGNN_train_test(optimizer_name, optimizer_val, drop_frac, use_YPhy, iteratio
                         validation_split=val_frac, callbacks=[early_stopping, TerminateOnNaN()])
     
     test_score = model.evaluate(testX, testY, verbose=0)
+    phy_cons = test_score[1]
+    percent_phy_incon = phy_cons
     print('iter: ' + str(iteration) + ' useYPhy: ' + str(use_YPhy) + ' nL: ' + str(n_layers) + ' nN: ' + str(n_nodes) + ' lamda: ' + str(lamda) + ' trsize: ' + str(tr_size) + ' TestRMSE: ' + str(test_score[2]) + ' PhyLoss: ' + str(test_score[1]))
     model.save(model_name)
-    spio.savemat(results_name, {'train_loss_1':history.history['loss_1'], 'val_loss_1':history.history['val_loss_1'], 'train_rmse':history.history['root_mean_squared_error'], 'val_rmse':history.history['val_root_mean_squared_error'], 'test_rmse':test_score[2]})
+    spio.savemat(results_name, {'train_loss_1':history.history['loss_1'], 'val_loss_1':history.history['val_loss_1'], 'train_rmse':history.history['root_mean_squared_error'], 'val_rmse':history.history['val_root_mean_squared_error'], 'test_rmse':test_score[2], 'phy_consistency': phy_cons, 'physical_inconsistency': percent_phy_incon, 'percentage_phy_incon': percent_phy_incon})
 
 
 if __name__ == '__main__':

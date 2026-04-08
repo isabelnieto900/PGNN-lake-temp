@@ -63,7 +63,7 @@ def evaluate_physics_loss(model, uX1, uX2, YPhy1, YPhy2):
     uout1 = model.predict(uX1) + YPhy1
     uout2 = model.predict(uX2) + YPhy2
     udendiff = (density(uout1) - density(uout2))
-    percentage_phy_incon = np.sum(udendiff>tolerance)/udendiff.shape[0]
+    percentage_phy_incon = np.mean(udendiff > tolerance)
     phy_loss = np.mean(relu(udendiff))
     return phy_loss, percentage_phy_incon
 
@@ -185,7 +185,10 @@ def PGNN_train_test(iteration=0):
                   'val_loss_1':history.history['val_loss_1'], 
                   'train_rmse':history.history['root_mean_squared_error'], 
                   'val_rmse':history.history['val_root_mean_squared_error'], 
-                  'test_rmse':test_score[2]})
+                  'test_rmse':test_score[2],
+                  'phy_consistency': phy_cons,
+                  'physical_inconsistency': percent_phy_incon,
+                  'percentage_phy_incon': percent_phy_incon})
     
     return train_rmse, test_rmse, phy_cons, percent_phy_incon
 

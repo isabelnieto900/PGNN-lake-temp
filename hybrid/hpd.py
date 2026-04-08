@@ -22,7 +22,7 @@ ap.add_argument('--epochs', default=10000, type=int, help='Epochs')
 ap.add_argument('--drop_frac', default=0.0, type=float, help='Dropout Fraction')
 ap.add_argument('--use_YPhy', type=int, default=1, help='Use Physics Numeric Model as input')
 ap.add_argument('--n_nodes', default=12, type=int, help='Number of Nodes in Hidden Layer')
-ap.add_argument('--n_layers', default=3, type=int, help='Number of Hidden Layers')
+ap.add_argument('--n_layers', default=2, type=int, help='Number of Hidden Layers')
 ap.add_argument('--lamda', '--lambda', dest='lamda', default=0.0, type=float, help='lambda hyperparameter')
 ap.add_argument('--tr_size', default=3000, type=int, help='Size of Training set')
 ap.add_argument('--val_frac', default=0.1, type=float, help='Validation Fraction')
@@ -62,17 +62,9 @@ def evaluate_physics_loss(model, uX1, uX2):
     uout1 = model.predict(uX1)
     uout2 = model.predict(uX2)
     udendiff = (density(uout1) - density(uout2))
-    percentage_phy_incon = np.mean(udendiff > tolerance)
+    percentage_phy_incon = np.sum(udendiff>tolerance)/udendiff.shape[0]
     phy_loss = np.mean(relu(udendiff))
     return phy_loss, percentage_phy_incon
-
-
-def get_model_family():
-    if args.use_YPhy == 0:
-        return 'NN'
-    if args.lamda == 0.0:
-        return 'PGNN0'
-    return 'PGNN'
 
 def PGNN_train_test(iteration=0):
     # Hyper-parameters of the training process
@@ -96,7 +88,6 @@ def PGNN_train_test(iteration=0):
     Xc = mat['Xc_doy']
     Y = mat['Y']
     YPhy = mat['Modeled_temp']
-    # Chronological split (index-based): train on early data, test on later data
     trainX, trainY = Xc[:args.tr_size,:],Y[:args.tr_size]
     testX, testY = Xc[args.tr_size:,:],Y[args.tr_size:]
     
@@ -160,26 +151,15 @@ def PGNN_train_test(iteration=0):
     print(" Physical Consistency = ", phy_cons)
     print(" Percentage Physical Incon = ", percent_phy_incon)
     
-    model_family = get_model_family()
-    results_dir = os.path.join(args.save_dir, model_family, args.dataset)
-    os.makedirs(results_dir, exist_ok=True)
-
     exp_name = 'pgnn_'+args.dataset+optimizer_name + '_drop' + str(args.drop_frac) + '_usePhy' + str(args.use_YPhy) +  '_nL' + str(args.n_layers) + '_nN' + str(args.n_nodes) + '_trsize' + str(args.tr_size) + '_lamda' + str(args.lamda) + '_iter' + str(iteration)
     exp_name = exp_name.replace('.','pt')
-    results_name = os.path.join(results_dir, exp_name + '_results.mat') # storing the results of the model
-    spio.savemat(
-        results_name,
-        {
-            'train_loss_1': history.history['loss_1'],
-            'val_loss_1': history.history['val_loss_1'],
-            'train_rmse': history.history['root_mean_squared_error'],
-            'val_rmse': history.history['val_root_mean_squared_error'],
-            'test_rmse': test_score[2],
-            'phy_consistency': phy_cons,
-            'physical_inconsistency': percent_phy_incon,
-            'percentage_phy_incon': percent_phy_incon
-        }
-    )
+    results_name = args.save_dir + exp_name + '_results.mat' # storing the results of the model
+    spio.savemat(results_name, 
+                 {'train_loss_1':history.history['loss_1'], 
+                  'val_loss_1':history.history['val_loss_1'], 
+                  'train_rmse':history.history['root_mean_squared_error'], 
+                  'val_rmse':history.history['val_root_mean_squared_error'], 
+                  'test_rmse':test_score[2]})
     
     return train_rmse, test_rmse, phy_cons, percent_phy_incon
 

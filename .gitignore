@@ -3,7 +3,7 @@ venv/
 papersensores.pdf
 
 # Generated results and logs
-results/*.mat
+results/
 *.log
 
 # Python

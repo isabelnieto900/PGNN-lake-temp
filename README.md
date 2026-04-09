@@ -84,11 +84,36 @@ python hpd.py --dataset mille_lacs --optimizer_val 1 --data_dir ../datasets/ --u
 
 Where `--optimizer_val 1` is AdaDelta.
 
+Results are saved automatically under `results/NN/<lake>/`.
+
 For a paper-like NN replication on Lake Mendota with 50 runs and both metrics saved:
 
 ```bash
 cd hybrid
 python hpd.py --dataset mendota --optimizer_val 1 --data_dir ../datasets/ --use_YPhy 0 --lambda 0.0 --n_layers 3 --n_nodes 12 --batch_size 1000 --epochs 10000 --val_frac 0.1 --patience_val 500 --tr_size 3000 --n_iters 50 --save_dir ../results/
+```
+
+For a single Mendota run, use:
+
+```bash
+cd hybrid
+python hpd.py --dataset mendota --optimizer_val 1 --data_dir ../datasets/ --use_YPhy 0 --lambda 0.0 --n_layers 3 --n_nodes 12 --batch_size 1000 --epochs 10000 --val_frac 0.1 --patience_val 500 --tr_size 3000 --n_iters 1 --save_dir ../results/
+```
+
+For PGNN0 (use_YPhy = 1, lambda = 0.0), results are saved automatically under `results/PGNN0/<lake>/`.
+
+For PGNN0 on Lake Mendota with 50 runs:
+
+```bash
+cd hybrid
+python hpd.py --dataset mendota --optimizer_val 1 --data_dir ../datasets/ --use_YPhy 1 --lambda 0.0 --n_layers 3 --n_nodes 12 --batch_size 1000 --epochs 10000 --val_frac 0.1 --patience_val 500 --tr_size 3000 --n_iters 50 --save_dir ../results/
+```
+
+For a single PGNN0 run on Lake Mendota:
+
+```bash
+cd hybrid
+python hpd.py --dataset mendota --optimizer_val 1 --data_dir ../datasets/ --use_YPhy 1 --lambda 0.0 --n_layers 3 --n_nodes 12 --batch_size 1000 --epochs 10000 --val_frac 0.1 --patience_val 500 --tr_size 3000 --n_iters 1 --save_dir ../results/
 ```
 
 Note: `std(Y^2)/std(ρ)` is the paper's `lambda_PHY` for the physics-based loss. It is not the physical inconsistency metric. The physical inconsistency reported by the code is the fraction of density-depth violations on the unlabeled set.

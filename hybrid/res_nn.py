@@ -179,7 +179,9 @@ def PGNN_train_test(iteration=0):
     
     exp_name = model_name+args.dataset+optimizer_name + '_drop' + str(args.drop_frac) + '_usePhy' + str(args.use_YPhy) +  '_nL' + str(args.n_layers) + '_nN' + str(args.n_nodes) + '_trsize' + str(args.tr_size) + '_lamda' + str(args.lamda) + '_iter' + str(iteration)
     exp_name = exp_name.replace('.','pt')
-    results_name = args.save_dir + exp_name + '_results.mat' # storing the results of the model
+    results_dir = os.path.join(args.save_dir, model_name.rstrip('_'), args.dataset)
+    os.makedirs(results_dir, exist_ok=True)
+    results_name = os.path.join(results_dir, exp_name + '_results.mat') # storing the results of the model
     spio.savemat(results_name, 
                  {'train_loss_1':history.history['loss_1'], 
                   'val_loss_1':history.history['val_loss_1'], 

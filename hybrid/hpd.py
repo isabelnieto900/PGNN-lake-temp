@@ -159,7 +159,10 @@ def PGNN_train_test(iteration=0):
                   'val_loss_1':history.history['val_loss_1'], 
                   'train_rmse':history.history['root_mean_squared_error'], 
                   'val_rmse':history.history['val_root_mean_squared_error'], 
-                  'test_rmse':test_score[2]})
+                  'test_rmse':test_score[2],
+                  'phy_consistency': phy_cons,
+                  'physical_inconsistency': percent_phy_incon,
+                  'percentage_phy_incon': percent_phy_incon})
     
     return train_rmse, test_rmse, phy_cons, percent_phy_incon
 

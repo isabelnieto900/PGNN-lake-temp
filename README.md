@@ -2,6 +2,15 @@
 
 This repository provides code for the PGNN paper. If you're using the code in your research please cite the paper https://arxiv.org/abs/1710.11431.
 
+## Attribution
+
+This repository is based on the original PGNN implementation by the authors:
+https://github.com/arkadaw9/PGNN
+
+The full git commit history is preserved to retain original authorship information.
+Please also cite the paper when using this code in research:
+https://arxiv.org/abs/1710.11431
+
 ## Abstract:
 This paper introduces a novel framework for combining scientific knowledge of physics-based models with neural networks to advance scientific discovery. This framework, termed as physics-guided neural network (PGNN), leverages the output of physics-based model simulations along with observational features to generate predictions using a neural network architecture. Further, this paper presents a novel framework for using physics-based loss functions in the learning objective of neural networks, to ensure that the model predictions not only show lower errors on the training set but are also scientifically consistent with the known physics on the unlabeled set. We illustrate the effectiveness of PGNN for the problem of lake temperature modeling, where physical relationships between the temperature, density, and depth of water are used to design a physics-based loss function. By using scientific knowledge to guide the construction and learning of neural networks, we are able to show that the proposed framework ensures better generalizability as well as scientific consistency of results.
 

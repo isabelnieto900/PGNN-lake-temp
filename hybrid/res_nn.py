@@ -2,12 +2,12 @@ import os
 import scipy.io as spio
 import numpy as np
 import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.optimizers import RMSprop, Adadelta, Adagrad, Adam, Nadam, SGD
-from keras.callbacks import EarlyStopping, TerminateOnNaN
-from keras import backend as K
-from keras.losses import mean_squared_error
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import RMSprop, Adadelta, Adagrad, Adam, Nadam, SGD
+from tensorflow.keras.callbacks import EarlyStopping, TerminateOnNaN
+from tensorflow.keras import backend as K
+from tensorflow.keras.losses import mean_squared_error
 
 import argparse
 

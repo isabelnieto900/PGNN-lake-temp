@@ -7,7 +7,6 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import RMSprop, Adadelta, Adagrad, Adam, Nadam, SGD
 from tensorflow.keras.callbacks import EarlyStopping, TerminateOnNaN
 from tensorflow.keras import backend as K
-from tensorflow.keras.losses import mean_squared_error
 
 #function to compute the room_mean_squared_error given the ground truth (y_true) and the predictions(y_pred)
 def root_mean_squared_error(y_true, y_pred):
@@ -28,7 +27,8 @@ def phy_loss_mean(params):
 def combined_loss(params):
     udendiff, lam = params
     def loss(y_true,y_pred):
-        return mean_squared_error(y_true, y_pred) + lam * K.mean(K.relu(udendiff))
+        mse = K.mean(K.square(y_pred - y_true), axis=-1)
+        return mse + lam * K.mean(K.relu(udendiff))
     return loss
 
 def relu(m):
@@ -106,7 +106,7 @@ def PGNN_train_test(optimizer_name, optimizer_val, drop_frac, use_YPhy, iteratio
                   optimizer=optimizer_val,
                   metrics=[phyloss, root_mean_squared_error])
 
-    early_stopping = EarlyStopping(monitor='val_loss_1', patience=patience_val,verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', mode='min', patience=patience_val,verbose=1)
     
     print('Running...' + optimizer_name)
     history = model.fit(trainX, trainY,
@@ -120,7 +120,9 @@ def PGNN_train_test(optimizer_name, optimizer_val, drop_frac, use_YPhy, iteratio
     percent_phy_incon = phy_cons
     print('iter: ' + str(iteration) + ' useYPhy: ' + str(use_YPhy) + ' nL: ' + str(n_layers) + ' nN: ' + str(n_nodes) + ' lamda: ' + str(lamda) + ' trsize: ' + str(tr_size) + ' TestRMSE: ' + str(test_score[2]) + ' PhyLoss: ' + str(test_score[1]))
     model.save(model_name)
-    spio.savemat(results_name, {'train_loss_1':history.history['loss_1'], 'val_loss_1':history.history['val_loss_1'], 'train_rmse':history.history['root_mean_squared_error'], 'val_rmse':history.history['val_root_mean_squared_error'], 'test_rmse':test_score[2], 'phy_consistency': phy_cons, 'physical_inconsistency': percent_phy_incon, 'percentage_phy_incon': percent_phy_incon})
+    train_loss_key = 'loss_1' if 'loss_1' in history.history else 'loss'
+    val_loss_key = 'val_loss_1' if 'val_loss_1' in history.history else 'val_loss'
+    spio.savemat(results_name, {'train_loss_1':history.history[train_loss_key], 'val_loss_1':history.history[val_loss_key], 'train_rmse':history.history['root_mean_squared_error'], 'val_rmse':history.history['val_root_mean_squared_error'], 'test_rmse':test_score[2], 'phy_consistency': phy_cons, 'physical_inconsistency': percent_phy_incon, 'percentage_phy_incon': percent_phy_incon})
 
 
 if __name__ == '__main__':

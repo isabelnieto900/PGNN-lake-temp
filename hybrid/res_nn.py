@@ -7,7 +7,6 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import RMSprop, Adadelta, Adagrad, Adam, Nadam, SGD
 from tensorflow.keras.callbacks import EarlyStopping, TerminateOnNaN
 from tensorflow.keras import backend as K
-from tensorflow.keras.losses import mean_squared_error
 
 import argparse
 
@@ -51,7 +50,8 @@ def phy_loss_mean(params):
 def combined_loss(params):
     udendiff, lam = params
     def loss(y_true,y_pred):
-        return mean_squared_error(y_true, y_pred) + lam * K.mean(K.relu(udendiff))
+        mse = K.mean(K.square(y_pred - y_true), axis=-1)
+        return mse + lam * K.mean(K.relu(udendiff))
     return loss
 
 def relu(m):
@@ -156,7 +156,7 @@ def PGNN_train_test(iteration=0):
                   optimizer=optimizer_val,
                   metrics=[phyloss, root_mean_squared_error])
 
-    early_stopping = EarlyStopping(monitor='val_loss_1', patience=args.patience_val, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', mode='min', patience=args.patience_val, verbose=1)
     
     print('Running...' + optimizer_name)
     history = model.fit(trainX, trainY,
@@ -182,9 +182,11 @@ def PGNN_train_test(iteration=0):
     results_dir = os.path.join(args.save_dir, model_name.rstrip('_'), args.dataset)
     os.makedirs(results_dir, exist_ok=True)
     results_name = os.path.join(results_dir, exp_name + '_results.mat') # storing the results of the model
+    train_loss_key = 'loss_1' if 'loss_1' in history.history else 'loss'
+    val_loss_key = 'val_loss_1' if 'val_loss_1' in history.history else 'val_loss'
     spio.savemat(results_name, 
-                 {'train_loss_1':history.history['loss_1'], 
-                  'val_loss_1':history.history['val_loss_1'], 
+                 {'train_loss_1':history.history[train_loss_key], 
+                  'val_loss_1':history.history[val_loss_key], 
                   'train_rmse':history.history['root_mean_squared_error'], 
                   'val_rmse':history.history['val_root_mean_squared_error'], 
                   'test_rmse':test_score[2],

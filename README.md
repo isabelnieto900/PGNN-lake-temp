@@ -116,4 +116,20 @@ cd hybrid
 python hpd.py --dataset mendota --optimizer_val 1 --data_dir ../datasets/ --use_YPhy 1 --lambda 0.0 --n_layers 3 --n_nodes 12 --batch_size 1000 --epochs 10000 --val_frac 0.1 --patience_val 500 --tr_size 3000 --n_iters 1 --save_dir ../results/
 ```
 
+For full PGNN (use_YPhy = 1, lambda > 0), results are saved automatically under `results/PGNN/<lake>/`.
+
+For PGNN on Lake Mendota with 1 run:
+
+```bash
+cd hybrid
+python hpd.py --dataset mendota --optimizer_val 1 --data_dir ../datasets/ --use_YPhy 1 --lambda 100.0 --n_layers 3 --n_nodes 12 --batch_size 1000 --epochs 10000 --val_frac 0.1 --patience_val 500 --tr_size 3000 --n_iters 1 --save_dir ../results/
+```
+
+For PGNN on Lake Mendota with 50 runs:
+
+```bash
+cd hybrid
+python hpd.py --dataset mendota --optimizer_val 1 --data_dir ../datasets/ --use_YPhy 1 --lambda 500.0 --n_layers 3 --n_nodes 12 --batch_size 1000 --epochs 10000 --val_frac 0.1 --patience_val 500 --tr_size 3000 --n_iters 50 --save_dir ../results/
+```
+
 Note: `std(Y^2)/std(ρ)` is the paper's `lambda_PHY` for the physics-based loss. It is not the physical inconsistency metric. The physical inconsistency reported by the code is the fraction of density-depth violations on the unlabeled set.

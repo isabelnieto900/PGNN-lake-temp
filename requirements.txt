@@ -1,0 +1,9 @@
+# PGNN - Dependencies (latest available)
+
+tensorflow
+numpy
+scipy
+jupyter
+ipython
+matplotlib
+scikit-learn

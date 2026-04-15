@@ -2,12 +2,11 @@ import os
 import scipy.io as spio
 import numpy as np
 import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.optimizers import RMSprop, Adadelta, Adagrad, Adam, Nadam, SGD
-from keras.callbacks import EarlyStopping, TerminateOnNaN
-from keras import backend as K
-from keras.losses import mean_squared_error
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import RMSprop, Adadelta, Adagrad, Adam, Nadam, SGD
+from tensorflow.keras.callbacks import EarlyStopping, TerminateOnNaN
+from tensorflow.keras import backend as K
 
 import argparse
 
@@ -15,21 +14,29 @@ import argparse
 
 ap = argparse.ArgumentParser(description='pretraining')
 ap.add_argument('--dataset', choices=['mille_lacs','mendota'], default='mille_lacs', type=str, help='Dataset choice')
-ap.add_argument('--optimizer_val', choices=range(7), default=2, type=int, help='Optimizer index: 0=Adagrad, 1=Adadelta, 2=Adam, 3=Nadam, 4=RMSprop, 5=SGD, 6=NSGD')
+ap.add_argument('--optimizer_val', choices=range(7), default=1, type=int, help='Optimizer index: 0=Adagrad, 1=Adadelta, 2=Adam, 3=Nadam, 4=RMSprop, 5=SGD, 6=NSGD')
 ap.add_argument('--data_dir', default='../datasets/', type=str, help='Data Directory')
 ap.add_argument('--batch_size', default=1000, type=int, help='Batch Size')
 ap.add_argument('--epochs', default=10000, type=int, help='Epochs')
 ap.add_argument('--drop_frac', default=0.0, type=float, help='Dropout Fraction')
 ap.add_argument('--use_YPhy', type=int, default=1, help='Use Physics Numeric Model as input')
 ap.add_argument('--n_nodes', default=12, type=int, help='Number of Nodes in Hidden Layer')
-ap.add_argument('--n_layers', default=2, type=int, help='Number of Hidden Layers')
+ap.add_argument('--n_layers', default=3, type=int, help='Number of Hidden Layers')
 ap.add_argument('--lamda', '--lambda', dest='lamda', default=0.0, type=float, help='lambda hyperparameter')
 ap.add_argument('--tr_size', default=3000, type=int, help='Size of Training set')
 ap.add_argument('--val_frac', default=0.1, type=float, help='Validation Fraction')
 ap.add_argument('--patience_val', default=500, type=int, help='Patience Value for Early Stopping')
 ap.add_argument('--n_iters', default=1, type=int, help='Number of Random Runs')
 ap.add_argument('--save_dir', default='./results/', type=str, help='Save Directory')
+ap.add_argument('--seed', default=42, type=int, help='Random seed for reproducibility')
+ap.add_argument('--learning_rate', default=0.001, type=float, help='Base learning rate for optimizers')
 args = ap.parse_args()
+
+np.random.seed(args.seed)
+if hasattr(tf, 'random') and hasattr(tf.random, 'set_seed'):
+    tf.random.set_seed(args.seed)
+else:
+    tf.compat.v1.set_random_seed(args.seed)
 
 #function to compute the room_mean_squared_error given the ground truth (y_true) and the predictions(y_pred)
 def root_mean_squared_error(y_true, y_pred):
@@ -50,7 +57,9 @@ def phy_loss_mean(params):
 def combined_loss(params):
     udendiff, lam = params
     def loss(y_true,y_pred):
-        return mean_squared_error(y_true, y_pred) + lam * K.mean(K.relu(udendiff))
+        # y_true and y_pred are kept 2D to avoid broadcast artifacts.
+        mse = K.mean(K.square(y_pred - y_true), axis=-1)
+        return mse + lam * K.mean(K.relu(udendiff))
     return loss
 
 def relu(m):
@@ -83,7 +92,16 @@ def PGNN_train_test(iteration=0):
     
     # List of optimizers to choose from 
     optimizer_names = ['Adagrad', 'Adadelta', 'Adam', 'Nadam', 'RMSprop', 'SGD', 'NSGD']
-    optimizer_vals = [Adagrad(clipnorm=1), Adadelta(clipnorm=1), Adam(clipnorm=1), Nadam(clipnorm=1), RMSprop(clipnorm=1), SGD(clipnorm=1.), SGD(clipnorm=1, nesterov=True)]
+    # Explicit optimizer hyperparameters keep modern tf.keras behavior stable and reproducible.
+    optimizer_vals = [
+        Adagrad(learning_rate=args.learning_rate, clipnorm=1),
+        Adadelta(learning_rate=args.learning_rate, rho=0.95, epsilon=1e-6, clipnorm=1),
+        Adam(learning_rate=args.learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-7, clipnorm=1),
+        Nadam(learning_rate=args.learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-7, clipnorm=1),
+        RMSprop(learning_rate=args.learning_rate, rho=0.9, epsilon=1e-7, clipnorm=1),
+        SGD(learning_rate=args.learning_rate, momentum=0.0, nesterov=False, clipnorm=1),
+        SGD(learning_rate=args.learning_rate, momentum=0.0, nesterov=True, clipnorm=1),
+    ]
     
     # selecting the optimizer
     optimizer_name = optimizer_names[args.optimizer_val]
@@ -96,8 +114,11 @@ def PGNN_train_test(iteration=0):
     Xc = mat['Xc_doy']
     Y = mat['Y']
     YPhy = mat['Modeled_temp']
-    trainX, trainY = Xc[:args.tr_size,:],Y[:args.tr_size]
-    testX, testY = Xc[args.tr_size:,:],Y[args.tr_size:]
+    trainX, trainY = Xc[:args.tr_size,:], Y[:args.tr_size]
+    testX, testY = Xc[args.tr_size:,:], Y[args.tr_size:]
+    # Keep targets 2D to avoid broadcasting artifacts in custom metrics/losses.
+    trainY = np.reshape(trainY, (-1, 1))
+    testY = np.reshape(testY, (-1, 1))
     
     # Loading unsupervised data
     unsup_filename = args.dataset + '_sampled.mat'
@@ -139,7 +160,7 @@ def PGNN_train_test(iteration=0):
                   optimizer=optimizer_val,
                   metrics=[phyloss, root_mean_squared_error])
 
-    early_stopping = EarlyStopping(monitor='val_loss_1', patience=args.patience_val, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', mode='min', patience=args.patience_val, verbose=1, restore_best_weights=True)
     
     print('Running...' + optimizer_name)
     history = model.fit(trainX, trainY,
@@ -164,9 +185,11 @@ def PGNN_train_test(iteration=0):
     results_dir = os.path.join(args.save_dir, get_model_family(), args.dataset)
     os.makedirs(results_dir, exist_ok=True)
     results_name = os.path.join(results_dir, exp_name + '_results.mat') # storing the results of the model
+    train_loss_key = 'loss_1' if 'loss_1' in history.history else 'loss'
+    val_loss_key = 'val_loss_1' if 'val_loss_1' in history.history else 'val_loss'
     spio.savemat(results_name, 
-                 {'train_loss_1':history.history['loss_1'], 
-                  'val_loss_1':history.history['val_loss_1'], 
+                 {'train_loss_1':history.history[train_loss_key], 
+                  'val_loss_1':history.history[val_loss_key], 
                   'train_rmse':history.history['root_mean_squared_error'], 
                   'val_rmse':history.history['val_root_mean_squared_error'], 
                   'test_rmse':test_score[2],

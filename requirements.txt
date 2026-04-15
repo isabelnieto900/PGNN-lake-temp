@@ -6,3 +6,4 @@ scipy
 jupyter
 ipython
 matplotlib
+scikit-learn
